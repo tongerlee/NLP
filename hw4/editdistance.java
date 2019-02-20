@@ -33,6 +33,7 @@ public class editdistance {
 
 		// Then, start to iterate through the dictionary and calculate the Levenshtein distance
 		try {
+			int count = 0;
 			BufferedReader rawBR = new BufferedReader(
 					new FileReader(rawFile));
 			BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
@@ -55,13 +56,14 @@ public class editdistance {
 					if(currDistance < minDistance) {
 						closestDictWord = currDict;
 						minDistance = currDistance;
-						// System.out.println("Now minimum distance is " + minDistance + " for " + currWord);
+						System.out.println("Now minimum distance is " + minDistance + " for " + currWord);
 					}
 					if(minDistance == 0) {
 						break;
 					}
 				}
 				writer.write(closestDictWord + " " + minDistance + "\n");
+				System.out.println("Done " + count++);
 			}
 			rawBR.close();
 			writer.close();
@@ -137,40 +139,36 @@ public class editdistance {
 				alphabet.put(eachLetter, 0);
 			}
 		}
-
+		for (int i = 0; i < n; i++) {
+			distance[i+1][0] = maxDistance;
+			distance[i+1][1] = i;
+		}
+		for (int j = 0; j < m; j++) {
+			distance[0][j+1] = maxDistance;
+			distance[1][j+1] = j;
+		}
 		int cost = 0;
-		for (int i = 0; i < n+1; i++) {
+		for (int i = 1; i < n+1; i++) {
 			int sub = 0;
-			for (int j = 0; j < m+1; j++) {
+			for (int j = 1; j < m+1; j++) {
 				cost = 0;
-				int subI = 0;
-				if(j > 0) {
-					subI = alphabet.get(currWord.split("")[j-1]);
-				}
+				int subI = alphabet.get(currWord.split("")[j-1]);
 				int subJ = sub;
-				if(i == 0 || j == 0) {
-					distance[i][j] = maxDistance;
-				} else if (j == 1) {
-					distance[i][j] = i;
-				} else if (i == 1) {
-					distance[i][j] = j;
-				} else if (currDict.charAt(i-1) == currWord.charAt(j-1)) {
+				if (currDict.charAt(i-1) == currWord.charAt(j-1)) {
 					cost = 0;
 					sub = j;
 					distance[i+1][j+1] = distance[i][j];
 				} else {
 					cost = 1;
-					distance[i+1][j+1] = 1 + Math.min(distance[i][j], Math.min(distance[i+1][j], distance[i][j+1]));
+					distance[i+1][j+1] = 1 + Math.min(distance[i][j], Math.min(distance[i][j+1], distance[i+1][j]));
 				}
 
-				distance[i+1][j+1] = Math.min(distance[i+1][j+1], distance[subI][subJ] + (i-subI-1) + cost +(j-subJ-1));
+				distance[i+1][j+1] = Math.min(distance[i+1][j+1], distance[subI][subJ] + (i-subI-1) + 1 +(j-subJ-1));
 			}
-			if(i > 0) {
-				alphabet.put(currDict.split("")[i-1], i);
-			}
+			alphabet.put(currDict.split("")[i-1], i);
 		}
 
-		return distance[n+1][m+1];	
+		return distance[n][m];	
 	}
 
 }
