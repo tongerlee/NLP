@@ -1,0 +1,22 @@
+overall accuracy
+0.9444
+precision for red
+0.8571
+recall for red
+1.0000
+precision for blue
+1.0000
+recall for blue
+0.9167
+
+overall accuracy
+0.7778
+precision for red
+0.6000
+recall for red
+1.0000
+precision for blue
+1.0000
+recall for blue
+0.6667
+
