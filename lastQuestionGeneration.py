@@ -8,7 +8,7 @@ from collections import Counter
 import copy
 import re
 import random
-PRONOUND_LIST = ["he", "she", "they", "his", "her", "their", "you", "your", "yours", "theirs", "hers", "it", "its",'these','those','this','that']
+PRONOUND_LIST = ["he", "she", "they", "his", "her", "their", "you", "your", "yours", "theirs", "hers", "it", "its",'these','those','this','that','i']
 
 
 def preprocess(inputFile):
@@ -24,7 +24,7 @@ def preprocess(inputFile):
         if (not (len(linesList[i].split(" ")) <= 7 and (not linesList[i].__contains__(".")))):
             processedFileContent += linesList[i] + " "
     fileContent = processedFileContent
-    fileContent = re.sub("[\(\[].*?[\)\]]", "", fileContent)
+    # fileContent = re.sub("[\(\[].*?[\)\]]", "", fileContent)
     sentences_split = nltk.sent_tokenize(fileContent)
 
     tokens = []
@@ -55,6 +55,13 @@ def getCompound(subject, compound):
             compound = getCompound(each_right_child, compound)
     return compound
 
+
+def removeCon(list):
+    check=["however","thus","therefore"]
+    if list[0].lower() in check and list[1]==",":
+        list=list[2:]
+    return " ".join(list)
+
 def yesNo_question(inputFile, numQuestions):
     '''
     be:
@@ -81,125 +88,123 @@ def yesNo_question(inputFile, numQuestions):
         checkedFlg = False
         nlp_sent = nlp(sentences_split[i])
 
-        if grammar_be_p_and_ver_p in tags[i]:
-            if grammar_be_p_and_ver_p==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                if tokens[i][curr].lower() == 'am' or tokens[i][curr].lower() == 'are':
-                    for X in nlp_sent:
 
-                        if X.dep_.__contains__('nsubj') and X.head.dep_== "ROOT":
-                            if X.text.lower() in PRONOUND_LIST:
-                                break
-                        if X.dep_ == 'ROOT':
-                            notRandomGeneration((tokens[i][curr] + " " + " ".join(tokens[i][:curr]) + " " + " ".join(
-                                tokens[i][curr + 1:-1]) + "?").capitalize())
-                            checkedFlg = True
-                            generatedNum+=1
+        if grammar_be_p_and_ver_p==list(nlp_sent.sents)[0].root.tag_:
+            if (list(nlp_sent.sents)[0].root.orth_=='am' or list(nlp_sent.sents)[0].root.orth_== 'are'):
+                for j,X in enumerate(nlp_sent):
+                    if X.dep_.__contains__('nsubj') and X.head.dep_== "ROOT":
+                        if X.text.lower() in PRONOUND_LIST:
                             break
+                    if X.dep_ == 'ROOT':
+                        curr=j
+                        notRandomGeneration((tokens[i][curr] + " " + removeCon(tokens[i][:curr])+ " " + " ".join(
+                            tokens[i][curr + 1:-1]) + "?").capitalize())
+                        checkedFlg = True
+                        generatedNum+=1
+                        break
         if checkedFlg:
             continue
 
-        if grammar_be_d_and_ver_d in tags[i]:
-            if grammar_be_d_and_ver_d==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                if tokens[i][curr].lower() == 'was' or tokens[i][curr].lower() == 'were':
-                    for X in nlp_sent:
 
-                        if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
-                            if X.text.lower() in PRONOUND_LIST:
-                                break
-                        if X.dep_ == 'ROOT':
-                            notRandomGeneration((tokens[i][curr] + " " + " ".join(tokens[i][:curr]) + " " + " ".join(
-                                tokens[i][curr + 1:-1]) + "?").capitalize())
-                            checkedFlg = True
-                            generatedNum += 1
-                            break
-        if checkedFlg:
-            continue
+        if grammar_be_d_and_ver_d==list(nlp_sent.sents)[0].root.tag_:
+            if (list(nlp_sent.sents)[0].root.orth_ == 'was' or list(nlp_sent.sents)[0].root.orth_ == 'were'):
+                for j, X in enumerate(nlp_sent):
 
-        if grammar_be_is_and_ver_3 in tags[i]:
-            if grammar_be_is_and_ver_3==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                if tokens[i][curr].lower() == 'is':
-                    for X in nlp_sent:
-                        if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
-                            if X.text.lower() in PRONOUND_LIST:
-                                break
-                        if X.dep_ == 'ROOT':
-                            notRandomGeneration((tokens[i][curr] + " " + " ".join(tokens[i][:curr]) + " " + " ".join(
-                                tokens[i][curr + 1:-1]) + "?").capitalize())
-                            generatedNum += 1
-                            checkedFlg = True
-                            break
-        if checkedFlg:
-            continue
-
-        # modal: should
-        if grammar_md in tags[i]:
-            if grammar_md==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                for X in nlp_sent:
                     if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
                         if X.text.lower() in PRONOUND_LIST:
                             break
                     if X.dep_ == 'ROOT':
-                        notRandomGeneration((tokens[i][curr] + " " + " ".join(tokens[i][:curr]) + " " + " ".join(
-                            tokens[i][curr + 1:-1]) + "?").capitalize() )
+                        curr=j
+                        notRandomGeneration((tokens[i][curr] + " " + removeCon(tokens[i][:curr]) + " " + " ".join(
+                            tokens[i][curr + 1:-1]) + "?").capitalize())
                         checkedFlg = True
                         generatedNum += 1
                         break
+        if checkedFlg:
+            continue
+
+
+        if grammar_be_is_and_ver_3==list(nlp_sent.sents)[0].root.tag_:
+            if (list(nlp_sent.sents)[0].root.orth_ == 'is'):
+                for j, X in enumerate(nlp_sent):
+                    if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
+                        if X.text.lower() in PRONOUND_LIST:
+                            break
+                    if X.dep_ == 'ROOT':
+                        curr=j
+                        notRandomGeneration((tokens[i][curr] + " " + removeCon(tokens[i][:curr])+ " " + " ".join(
+                            tokens[i][curr + 1:-1]) + "?").capitalize())
+                        generatedNum += 1
+                        checkedFlg = True
+                        break
+        if checkedFlg:
+            continue
+
+        # modal: should
+
+        if grammar_md==list(nlp_sent.sents)[0].root.tag_:
+            for j, X in enumerate(nlp_sent):
+                if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
+                    if X.text.lower() in PRONOUND_LIST:
+                        break
+                if X.dep_ == 'ROOT':
+                    curr=j
+                    notRandomGeneration((tokens[i][curr] + " " + removeCon(tokens[i][:curr])+ " " + " ".join(
+                        tokens[i][curr + 1:-1]) + "?").capitalize() )
+                    checkedFlg = True
+                    generatedNum += 1
+                    break
 
         if checkedFlg:
             continue
 
         # verb
-        if grammar_be_p_and_ver_p in tags[i]:
-            if grammar_be_p_and_ver_p==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                if tokens[i][curr].lower() != 'am' and tokens[i][curr].lower() != 'are':
-                    for X in nlp_sent:
-                        if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
-                            if X.text.lower() in PRONOUND_LIST:
-                                break
-                        if X.dep_ == 'ROOT':
-                            notRandomGeneration(("Do " + " ".join(tokens[i][:curr]) + " " + X.lemma_ + " " + " ".join(
-                                tokens[i][curr + 1:-1]) + "?").capitalize() )
-                            checkedFlg = True
-                            generatedNum += 1
+
+        if grammar_be_p_and_ver_p==list(nlp_sent.sents)[0].root.tag_:
+            if (list(nlp_sent.sents)[0].root.orth_ != 'am' or list(nlp_sent.sents)[0].root.orth_ != 'are'):
+                for j, X in enumerate(nlp_sent):
+                    if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
+                        if X.text.lower() in PRONOUND_LIST:
                             break
-        if checkedFlg:
-            continue
-        if grammar_be_d_and_ver_d in tags[i]:
-            if grammar_be_d_and_ver_d==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                if tokens[i][curr].lower() != 'was' and tokens[i][curr].lower() != 'were':
-                    for X in nlp_sent:
-                        if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
-                            if X.text.lower() in PRONOUND_LIST:
-                                break
-                        if X.dep_ == 'ROOT':
-                            notRandomGeneration(("Did " + " ".join(tokens[i][:curr]) + " " + X.lemma_ + " " + " ".join(
-                                tokens[i][curr + 1:-1]) + "?").capitalize() )
-                            checkedFlg = True
-                            generatedNum += 1
-                            break
+                    if X.dep_ == 'ROOT':
+                        curr=j
+                        notRandomGeneration(("Do " + removeCon(tokens[i][:curr]) + " " + X.lemma_ + " " + " ".join(
+                            tokens[i][curr + 1:-1]) + "?").capitalize() )
+                        checkedFlg = True
+                        generatedNum += 1
+                        break
         if checkedFlg:
             continue
 
-        if grammar_be_is_and_ver_3 in tags[i]:
-            if grammar_be_is_and_ver_3==list(nlp_sent.sents)[0].root.tag_:
-                curr = tags[i].index(list(nlp_sent.sents)[0].root.tag_)
-                if tokens[i][curr].lower() != 'is':
-                    for X in nlp_sent:
-                        if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
-                            if X.text.lower() in PRONOUND_LIST:
-                                break
-                        if X.dep_ == 'ROOT':
-                            notRandomGeneration(("Does " + " ".join(tokens[i][:curr]) + " " + X.lemma_ + " " + " ".join(
-                                tokens[i][curr + 1:-1]) + "?").capitalize() )
-                            checkedFlg = True
-                            generatedNum += 1
+        if grammar_be_d_and_ver_d==list(nlp_sent.sents)[0].root.tag_:
+            if (list(nlp_sent.sents)[0].root.orth_ != 'was' or list(nlp_sent.sents)[0].root.orth_ != 'were'):
+                for j, X in enumerate(nlp_sent):
+                    if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
+                        if X.text.lower() in PRONOUND_LIST:
                             break
+                    if X.dep_ == 'ROOT':
+                        curr=j
+                        notRandomGeneration(("Did " + removeCon(tokens[i][:curr]) + " " + X.lemma_ + " " + " ".join(
+                            tokens[i][curr + 1:-1]) + "?").capitalize() )
+                        checkedFlg = True
+                        generatedNum += 1
+                        break
+        if checkedFlg:
+            continue
+
+        if grammar_be_is_and_ver_3==list(nlp_sent.sents)[0].root.tag_:
+            if (list(nlp_sent.sents)[0].root.orth_ != 'is'):
+                for j, X in enumerate(nlp_sent):
+                    if X.dep_.__contains__('nsubj') and X.head.dep_ == "ROOT":
+                        if X.text.lower() in PRONOUND_LIST:
+                            break
+                    if X.dep_ == 'ROOT':
+                        curr=j
+                        notRandomGeneration(("Does " + removeCon(tokens[i][:curr]) + " " + X.lemma_ + " " + " ".join(
+                            tokens[i][curr + 1:-1]) + "?").capitalize() )
+                        checkedFlg = True
+                        generatedNum += 1
+                        break
         if checkedFlg:
             continue
 
@@ -259,6 +264,11 @@ def wh_question(inputFile, numQuestions):
                                         if X.n_lefts + X.n_rights > 0:
                                             compound = None
                                             subject = getCompound(X, compound)
+                                    if X.dep_ == 'ROOT':
+                                        root_index = j
+                                        if nlp_sent[j + 1].tag_ == 'IN':
+                                            subject = None
+                                            break
                                 if subject is not None:
                                     if not (subject.lower().split().__contains__(
                                             "another") or subject.lower().__contains__("example")\
@@ -315,10 +325,6 @@ def wh_question(inputFile, numQuestions):
                                 continue
         elif root_token.tag_ == 'VBD':
             root_index = -1
-            # if 'NN' in [tmp.tag_ for tmp in root_token.rights]:
-            #     if 'VB' not in [tmp.tag_ for tmp in root_token.rights] and 'VBZ' not in [tmp.tag_ for tmp in root_token.rights]\
-            #         and 'VBP' not in [tmp.tag_ for tmp in root_token.rights] and 'VBN' not in [tmp.tag_ for tmp in root_token.rights]\
-            #             and 'VBD' not in [tmp.tag_ for tmp in root_token.rights]:
             for j, X in enumerate(nlp_sent):
                 # print(j, X, X.dep_, X.pos_, X.tag_, X.ent_iob_, X.ent_type_)
                 if X.dep_ == 'nsubj' and X.head.dep_ == 'ROOT':
@@ -542,6 +548,7 @@ def wh_question(inputFile, numQuestions):
             generatedNum += 1
 
     return generatedNum
+
 
 
 if __name__ == '__main__':
